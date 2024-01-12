@@ -1,23 +1,12 @@
-use bevy::prelude::{App, Startup, Update, Query, IntoSystemConfigs};
+use bevy::prelude::{App, Startup, Update, Query, DefaultPlugins, Plugin};
 use bevy::ecs::component::Component;
 use bevy::ecs::system::Commands;
 use bevy::ecs::query::With;
 
 fn main() {
     App::new()
-        .add_systems(Startup, add_people)
-        .add_systems(Update, (hello, (update_people, greet_people).chain()))
+        .add_plugins((DefaultPlugins, HelloPlugin))
         .run();
-}
-
-fn hello() {
-    println!("hello!");
-}
-
-fn greet_people(query: Query<&Name, With<Person>>) {
-    for name in &query {
-        println!("hello {}!", name.0);
-    }
 }
 
 #[derive(Component)]
@@ -40,3 +29,19 @@ fn update_people(mut query: Query<&mut Name, With<Person>>) {
         }
     }
 }
+
+pub struct HelloPlugin;
+
+impl Plugin for HelloPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, add_people)
+            .add_systems(Update, greet_people);
+    }
+}
+
+fn greet_people(query: Query<&Name, With<Person>>) {
+    for name in &query {
+        println!("hello {}!", name.0);
+    }
+}
+
