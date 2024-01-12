@@ -1,13 +1,36 @@
-use bevy::prelude::{App, Startup, Update, Query, DefaultPlugins, Plugin};
-use bevy::ecs::component::Component;
-use bevy::ecs::system::{Commands, Resource, Res, ResMut};
-use bevy::ecs::query::With;
-use bevy::time::{Time, Timer, TimerMode};
+use bevy::{
+    prelude::*,
+    core_pipeline::clear_color::ClearColorConfig,
+    ecs::{
+        system::{Commands, Res, ResMut},
+        query::With
+    },
+    time::{Time, Timer, TimerMode}
+};
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, HelloPlugin))
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).build())
+        .add_systems(Startup, setup)
         .run();
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(Camera2dBundle {
+        camera_2d: Camera2d {
+            clear_color: ClearColorConfig::Custom(Color::GRAY),
+        },
+        ..default()
+    });
+
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            custom_size: Some(Vec2::new(100.0, 100.0)),
+            ..default()
+        },
+        texture: asset_server.load("beard.png"),
+        ..default()
+    });
 }
 
 #[derive(Component)]
