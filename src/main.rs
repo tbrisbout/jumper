@@ -1,17 +1,15 @@
 use bevy::{
     prelude::*,
     core_pipeline::clear_color::ClearColorConfig,
-    ecs::{
-        system::{Commands, Res, ResMut},
-        query::With
-    },
-    time::{Time, Timer, TimerMode}
+    ecs::system::{Commands, Res},
+    time::Time,
 };
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).build())
         .add_systems(Startup, setup)
+        .add_systems(Update, character_movement)
         .run();
 }
 
@@ -23,56 +21,45 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     });
 
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(100.0, 100.0)),
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(100.0, 100.0)),
+                ..default()
+            },
+            texture: asset_server.load("beard.png"),
             ..default()
-        },
-        texture: asset_server.load("beard.png"),
-        ..default()
-    });
+        }, Player { speed: 200.0 },
+    ));
 }
 
-#[derive(Component)]
-struct Person;
+fn character_movement(
+    mut characters: Query<(&mut Transform, &Player)>,
+    input: Res<Input<KeyCode>>,
+    time: Res<Time>,
+) {
+    for (mut transform, player) in &mut characters {
+        let distance = player.speed * time.delta_seconds();
 
-#[derive(Component)]
-struct Name(String);
+        if input.pressed(KeyCode::Up) {
+            transform.translation.y += distance;
+        }
 
-fn add_people(mut commands: Commands) {
-    commands.spawn((Person, Name("Foo Bar".to_string())));
-    commands.spawn((Person, Name("Bar Baz".to_string())));
-    commands.spawn((Person, Name("Baz Qux".to_string())));
-}
+        if input.pressed(KeyCode::Down) {
+            transform.translation.y -= distance;
+        }
 
-fn update_people(mut query: Query<&mut Name, With<Person>>) {
-    for mut name in &mut query {
-        if name.0 == "Foo Bar" {
-            name.0 = "Foo Barbar".to_string();
-            break;
+        if input.pressed(KeyCode::Right) {
+            transform.translation.x += distance;
+        }
+
+        if input.pressed(KeyCode::Left) {
+            transform.translation.x -= distance;
         }
     }
 }
 
-pub struct HelloPlugin;
-
-impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
-            .add_systems(Startup, add_people)
-            .add_systems(Update, greet_people);
-    }
-}
-
-#[derive(Resource)]
-struct GreetTimer(Timer);
-
-fn greet_people(time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
-    // update the timer with the time elapsed since the last update
-    // if that caused the timer to finish, say hello
-    if timer.0.tick(time.delta()).just_finished() {
-        for name in &query {
-            println!("hello {}!", name.0);
-        }
-    }
+#[derive(Component)]
+struct Player {
+    pub speed: f32,
 }
