@@ -9,7 +9,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).build())
         .add_systems(Startup, setup)
-        .add_systems(Update, character_movement)
+        .add_systems(Update, (character_movement, snail_visibility, snail_movement))
         .run();
 }
 
@@ -27,9 +27,23 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 custom_size: Some(Vec2::new(100.0, 100.0)),
                 ..default()
             },
+            texture: asset_server.load("snail.png"),
+            visibility: Visibility::Hidden,
+            ..default()
+        },
+        Automove(0),
+    ));
+
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(100.0, 100.0)),
+                ..default()
+            },
             texture: asset_server.load("beard.png"),
             ..default()
-        }, Player { speed: 200.0 },
+        },
+        Player { speed: 200.0 },
     ));
 }
 
@@ -69,7 +83,29 @@ fn character_movement(
     }
 }
 
+fn snail_visibility(
+    mut query: Query<&mut Visibility, Without<Player>>,
+    input: Res<Input<KeyCode>>,
+) {
+    let mut vis_map = query.single_mut();
+    if input.pressed(KeyCode::O) {
+        *vis_map = Visibility::Visible;
+    }
+}
+
+fn snail_movement(
+    mut query: Query<&mut Transform, &Automove>,
+    time: Res<Time>,
+) {
+    for mut transform in &mut query {
+        transform.translation.x += 20.0 * time.delta_seconds();
+    }
+}
+
 #[derive(Component)]
 struct Player {
     pub speed: f32,
 }
+
+#[derive(Component)]
+struct Automove(usize);
