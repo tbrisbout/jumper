@@ -41,20 +41,30 @@ fn character_movement(
     for (mut transform, player) in &mut characters {
         let distance = player.speed * time.delta_seconds();
 
-        if input.pressed(KeyCode::Up) {
+        //
+        // Support arrows, WASD style, Vim HJKL style
+        //
+
+        if input.any_pressed([KeyCode::Up, KeyCode::W, KeyCode::K]) {
             transform.translation.y += distance;
         }
 
-        if input.pressed(KeyCode::Down) {
+        if input.any_pressed([KeyCode::Down, KeyCode::S, KeyCode::J]) {
             transform.translation.y -= distance;
         }
 
-        if input.pressed(KeyCode::Right) {
+        if input.any_pressed([KeyCode::Right, KeyCode::D, KeyCode::L]) {
             transform.translation.x += distance;
         }
 
-        if input.pressed(KeyCode::Left) {
+        if input.any_pressed([KeyCode::Left, KeyCode::A, KeyCode::H]) {
             transform.translation.x -= distance;
+        }
+
+        if input.pressed(KeyCode::R) {
+            // reset position
+            transform.translation.x = 0.0;
+            transform.translation.y = 0.0;
         }
     }
 }
